@@ -1,0 +1,346 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>最終問題</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <style>
+        body {
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            background-color: #f0f4f8;
+        }
+        #initial-text {
+            font-family: 'Noto Serif JP', serif;
+        }
+        .main-content-fade-in {
+            animation: fade-in 1.5s ease-out forwards;
+        }
+        @keyframes fade-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .animate-shrink-move-up {
+            animation-name: shrink-move-up-kf;
+            animation-fill-mode: forwards;
+            animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @keyframes shrink-move-up-kf {
+            to {
+                transform: translateY(var(--final-y)) scale(0.5);
+            }
+        }
+        .grid-cell {
+            font-family: 'Noto Serif JP', serif;
+            font-weight: 400;
+            box-sizing: border-box;
+            user-select: none;
+        }
+        
+        #scroll-wrapper {
+            max-height: calc(100vh - 112px - 20px);
+            overflow-y: auto;
+            padding-right: 16px;
+            padding-bottom: 20px;
+        }
+    </style>
+</head>
+<body class="overflow-hidden">
+    <div id="initial-text-container" class="fixed inset-0 flex items-center justify-center z-20">
+        <h1 id="initial-text" class="text-4xl md:text-6xl font-bold whitespace-nowrap" style="transform-origin: center; opacity: 0;"></h1>
+    </div>
+    <main id="main-content" class="w-full h-screen pt-28 flex justify-center opacity-0 relative">
+        <div id="scroll-wrapper">
+             <div id="grid-container" class="w-full max-w-4xl mx-auto flex flex-col space-y-4"></div>
+        </div>
+        <div id="bottom-gradient" class="absolute bottom-0 left-0 right-0 h-[20px] z-10 pointer-events-none"></div>
+    </main>
+    <script>
+        const CONFIG = {
+            backgroundColor: '#222222',
+            initialTextColor: '#ffffff',
+            initialTextAmplitude: 0.4,
+            initialTextInitialSize: 0.5,
+            initialTextGrowthRate: 0.1,
+            initialTextMoveDuration: 1000,
+            titleTextDurations: [3500, 1500],
+            initialTextContents: ["ここにテキストを入力", "謎3: 最終問題「ここにタイトルを入力予定」"],
+            
+            blinkEffect: {
+                duration: 240,
+                frequency: 30,
+            },
+            transitionEffect: {
+                duration: 80,
+                amplitude: { x: 3, y: 2 },
+                frequency: 10,
+            },
+            preFadeoutVibration: {
+                duration: 110, // 消える直前の何秒間振動するか(ms)
+                amplitude: { x: 2, y: 1 } // 振幅(px)
+            },
+            gridBorderWidth: '0.75px',
+            gridBorderColor: '#666666',
+            gridCellColorInitial: '#222222',
+            gridTextColorInitial: '#ffffff',
+            gridCellColorToggled: '#dddddd',
+            gridTextColorToggled: '#444444',
+            gridCharacters: [
+                [['け','み','き','や','こ'],
+                ['と','し','よ','か','ん'],
+                ['ぬ','そ','う','り','た'],
+                ['ら','い','と','ん','ぼ'],
+                ['み','え','ふ','く','り']],
+                
+                [['さ','さ','た','ろ','う'],
+                ['そ','ぬ','ひ','ま','で'],
+                ['す','い','か','ー','ど'],
+                ['か','せ','ち','り','け'],
+                ['す','べ','り','だ','い']],
+                
+                [['ら','ふ','お','ほ','け'],
+                ['こ','い','の','ぼ','り'],
+                ['ま','よ','な','ち','ん'],
+                ['も','さ','ふ','け','ご'],
+                ['れ','や','ほ','し','い']],
+                
+                [['よ','み','か','づ','き'],
+                ['や','せ','こ','ら','ゆ'],
+                ['て','ん','た','こ','う'],
+                ['す','ま','く','に','り'],
+                ['し','ふ','い','か','と']],
+                
+                [['ら','か','み','な','り'],
+                ['せ','ね','ま','く','も'],
+                ['き','よ','な','る','こ'],
+                ['れ','み','ぐ','て','ん'],
+                ['か','や','く','ち','ほ']]
+            ],
+            
+            iconBox: {
+                containerWidth: '500px',
+                boxSize: { width: '64px', height: '80px' },
+                gap: '2px',
+                iconSize: '58px',
+                textSize: '12px',
+                textColor: '#ffffff'
+            },
+            iconBoxSets: [
+                [{ iconUrl: 'images/kyoto.png', text: '◯。◯◯◯' },
+                { iconUrl: 'images/library.png', text: '◯◯。◯◯' },
+                { iconUrl: 'images/light.png', text: '◯◯◯' },
+                { iconUrl: 'images/dragonfly.png', text: '◯◯◯' }],
+                
+                [{ iconUrl: 'images/slider.png', text: '◯◯◯◯◯' }, 
+                { iconUrl: 'images/card.png', text: '◯◯◯' }, 
+                { iconUrl: 'images/watch.png', text: '◯◯◯◯◯' }, 
+                { iconUrl: 'images/watermelon.png', text: '◯◯◯' }, 
+                { iconUrl: 'images/sasataro.png', text: '◯◯◯◯◯' }],
+                
+                [{ iconUrl: 'images/koma.png', text: '◯◯' }, 
+                { iconUrl: 'images/koinobori.png', text: '◯◯◯◯◯' }, 
+                { iconUrl: 'images/apple.png', text: '◯◯◯' }, 
+                { iconUrl: 'images/axe.png', text: '◯◯' }, 
+                { iconUrl: 'images/star.png', text: '◯◯' }],
+                
+                [{ iconUrl: 'images/cucumber.png', text: '◯。◯◯' }, 
+                { iconUrl: 'images/squid.png', text: '◯◯' }, 
+                { iconUrl: 'images/hand.png', text: '◯' }, 
+                { iconUrl: 'images/octopus.png', text: '◯◯' },
+                { iconUrl: 'images/store.png', text: '◯◯' }, 
+                { iconUrl: 'images/moon.png', text: '◯◯◯◯' }],
+                
+                [{ iconUrl: 'images/mouth.png', text: '◯◯' }, 
+                { iconUrl: 'images/controller.png', text: '◯◯◯◯' }, 
+                { iconUrl: 'images/tree.png', text: '◯' }, 
+                { iconUrl: 'images/thunder.png', text: '◯◯◯◯' }, 
+                { iconUrl: 'images/money.png', text: '◯◯' }]
+            ]
+        };
+        document.addEventListener('DOMContentLoaded', () => {
+            const body = document.body;
+            const initialTextEl = document.getElementById('initial-text');
+            const initialTextContainer = document.getElementById('initial-text-container');
+            const mainContentEl = document.getElementById('main-content');
+            const bottomGradientEl = document.getElementById('bottom-gradient');
+            
+            body.style.backgroundColor = CONFIG.backgroundColor;
+            initialTextEl.style.color = CONFIG.initialTextColor;
+            bottomGradientEl.style.background = `linear-gradient(to top, ${CONFIG.backgroundColor}, transparent)`;
+            async function runAnimationSequence() {
+                const STATES = { BLINK: 0, NORMAL_1: 1, TRANSITION: 2, NORMAL_2: 3, END: 4 };
+                let currentState = STATES.BLINK;
+                let totalStartTime = performance.now();
+                let stateStartTime = performance.now();
+                let animationFrameId = null;
+                const text1Duration = CONFIG.titleTextDurations[0];
+                const text2Duration = CONFIG.titleTextDurations[1];
+                const blinkDuration = CONFIG.blinkEffect.duration;
+                const transitionDuration = CONFIG.transitionEffect.duration;
+                initialTextEl.textContent = CONFIG.initialTextContents[0];
+                function animationLoop(timestamp) {
+                    const totalElapsed = timestamp - totalStartTime;
+                    const stateElapsed = timestamp - stateStartTime;
+                    let vibX = 0, vibY = 0, transVibX = 0, transVibY = 0, preVibX = 0, preVibY = 0, scale = 0, opacity = 1;
+                    switch (currentState) {
+                        case STATES.BLINK:
+                            if (stateElapsed > blinkDuration) {
+                                currentState = STATES.NORMAL_1;
+                                stateStartTime = timestamp;
+                            }
+                            break;
+                        case STATES.NORMAL_1:
+                            if (stateElapsed > text1Duration - blinkDuration) {
+                                currentState = STATES.TRANSITION;
+                                stateStartTime = timestamp;
+                            }
+                            break;
+                        case STATES.TRANSITION:
+                            if (stateElapsed > transitionDuration) {
+                                currentState = STATES.NORMAL_2;
+                                stateStartTime = timestamp;
+                            }
+                            break;
+                        case STATES.NORMAL_2:
+                            if (stateElapsed > text2Duration) {
+                                currentState = STATES.END;
+                            }
+                            break;
+                    }
+                    const scalingProgress = Math.min(totalElapsed / (text1Duration + transitionDuration + text2Duration), 1);
+                    scale = CONFIG.initialTextInitialSize + (CONFIG.initialTextGrowthRate * scalingProgress);
+                    
+                    const amp = CONFIG.initialTextAmplitude;
+                    vibX = (Math.random() - 0.5) * 2 * amp;
+                    vibY = (Math.random() - 0.5) * 2 * amp;
+                    switch (currentState) {
+                        case STATES.BLINK:
+                            const blinkInterval = 1000 / CONFIG.blinkEffect.frequency;
+                            opacity = Math.floor(stateElapsed / blinkInterval) % 2 === 0 ? 0 : 1;
+                            break;
+                        
+                        case STATES.NORMAL_1:
+                            const preVibeDuration = CONFIG.preFadeoutVibration.duration;
+                            if (stateElapsed > (text1Duration - blinkDuration) - preVibeDuration) {
+                                const vibeAmp = CONFIG.preFadeoutVibration.amplitude;
+                                preVibX = (Math.random() - 0.5) * 2 * vibeAmp.x;
+                                preVibY = (Math.random() - 0.5) * 2 * vibeAmp.y;
+                            }
+                            break;
+                        case STATES.TRANSITION:
+                            if (stateElapsed > transitionDuration / 2) {
+                                initialTextEl.textContent = CONFIG.initialTextContents[1];
+                            }
+                            const transAmp = CONFIG.transitionEffect.amplitude;
+                            transVibX = (Math.random() - 0.5) * 2 * transAmp.x;
+                            transVibY = (Math.random() - 0.5) * 2 * transAmp.y;
+                            break;
+                        
+                        case STATES.NORMAL_2:
+                            if (stateElapsed > text2Duration - 1000) {
+                                const dampProgress = (stateElapsed - (text2Duration - 1000)) / 1000;
+                                const dampedAmp = CONFIG.initialTextAmplitude * (1 - dampProgress);
+                                vibX = (Math.random() - 0.5) * 2 * dampedAmp;
+                                vibY = (Math.random() - 0.5) * 2 * dampedAmp;
+                            }
+                            break;
+                    }
+                    
+                    initialTextEl.style.opacity = opacity;
+                    initialTextEl.style.transform = `translate(${vibX + transVibX + preVibX}px, ${vibY + transVibY + preVibY}px) scale(${scale})`;
+                    if (currentState !== STATES.END) {
+                        animationFrameId = requestAnimationFrame(animationLoop);
+                    } else {
+                        const initialCenterY = window.innerHeight / 2;
+                        const finalTopPadding = 32;
+                        const finalHeight = initialTextEl.offsetHeight * 0.5;
+                        const finalCenterY = finalTopPadding + (finalHeight / 2);
+                        const translationY = finalCenterY - initialCenterY;
+                        initialTextEl.style.setProperty('--final-y', `${translationY}px`);
+                        initialTextEl.style.animationDuration = `${CONFIG.initialTextMoveDuration}ms`;
+                        initialTextEl.classList.add('animate-shrink-move-up');
+                        setTimeout(() => {
+                            initialTextContainer.style.pointerEvents = 'none';
+                        }, CONFIG.initialTextMoveDuration);
+                        createMainContent();
+                        mainContentEl.classList.add('main-content-fade-in');
+                    }
+                }
+                
+                animationFrameId = requestAnimationFrame(animationLoop);
+            }
+            
+            function createMainContent() {
+                const container = document.getElementById('grid-container');
+                container.innerHTML = '';
+                CONFIG.gridCharacters.forEach((gridData, index) => {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'flex items-center space-x-8 pl-8'; 
+                    const gridElement = document.createElement('div');
+                    gridElement.className = 'grid shrink-0';
+                    gridElement.style.gridTemplateColumns = 'repeat(5, 1fr)';
+                    gridElement.style.border = `${CONFIG.gridBorderWidth} solid ${CONFIG.gridBorderColor}`;
+                    gridElement.style.width = '170px';
+                    gridElement.style.height = '170px';
+                    gridData.flat().forEach(char => {
+                        const cell = document.createElement('div');
+                        cell.className = 'grid-cell flex items-center justify-center text-lg cursor-pointer transition-colors duration-200';
+                        cell.textContent = char;
+                        cell.style.border = `${CONFIG.gridBorderWidth} solid ${CONFIG.gridBorderColor}`;
+                        cell.style.backgroundColor = CONFIG.gridCellColorInitial;
+                        cell.style.color = CONFIG.gridTextColorInitial;
+                        cell.dataset.toggled = 'false';
+                        gridElement.appendChild(cell);
+                    });
+                    
+                    const iconBoxContainer = document.createElement('div');
+                    iconBoxContainer.className = 'flex flex-wrap';
+                    iconBoxContainer.style.gap = CONFIG.iconBox.gap;
+                    iconBoxContainer.style.width = CONFIG.iconBox.containerWidth;
+                    
+                    const boxSet = CONFIG.iconBoxSets[index] || [];
+                    boxSet.forEach(boxData => {
+                        const box = document.createElement('div');
+                        box.className = 'flex flex-col items-center justify-center rounded-md';
+                        box.style.width = CONFIG.iconBox.boxSize.width;
+                        box.style.height = CONFIG.iconBox.boxSize.height;
+                        const icon = document.createElement('img');
+                        icon.src = boxData.iconUrl;
+                        icon.style.width = CONFIG.iconBox.iconSize;
+                        icon.style.height = CONFIG.iconBox.iconSize;
+                        icon.style.marginBottom = '4px';
+                        icon.onerror = () => { icon.src = `https://placehold.co/${CONFIG.iconBox.iconSize.replace('px','')}?text=?`; };
+                        const text = document.createElement('span');
+                        text.textContent = boxData.text;
+                        text.style.fontSize = CONFIG.iconBox.textSize;
+                        text.style.color = CONFIG.iconBox.textColor;
+                        box.appendChild(icon);
+                        box.appendChild(text);
+                        iconBoxContainer.appendChild(box);
+                    });
+                    wrapper.appendChild(gridElement);
+                    wrapper.appendChild(iconBoxContainer);
+                    container.appendChild(wrapper);
+                });
+                container.addEventListener('click', (event) => {
+                    const cell = event.target.closest('.grid-cell');
+                    if (!cell) return;
+                    const isToggled = cell.dataset.toggled === 'true';
+                    if (isToggled) {
+                        cell.style.backgroundColor = CONFIG.gridCellColorInitial;
+                        cell.style.color = CONFIG.gridTextColorInitial;
+                        cell.dataset.toggled = 'false';
+                    } else {
+                        cell.style.backgroundColor = CONFIG.gridCellColorToggled;
+                        cell.style.color = CONFIG.gridTextColorToggled;
+                        cell.dataset.toggled = 'true';
+                    }
+                });
+            }
+            runAnimationSequence();
+        });
+    </script>
+</body>
+</html>
